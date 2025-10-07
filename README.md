@@ -21,7 +21,7 @@ $ go build ./cmd/apt-sync
 $ ./apt-sync
 ```
 
-As of writing, the cache for a minimal install + updates + docker is 4.5GB,
+As of writing, the cache for a minimal install + updates + cri-o + k8s is 4.5GB,
 3.2GB of which is the ISO.
 
 ## netboot

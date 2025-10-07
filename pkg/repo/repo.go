@@ -49,6 +49,7 @@ func (repo *Repo) SyncMetadata() error {
 		if dir != "" && !strings.HasPrefix(dir, repo.Component+"/") ||
 			strings.Contains(dir, "/binary-") && !strings.Contains(dir, "/binary-"+repo.Arch) ||
 			strings.HasSuffix(dir, "/source/") ||
+			strings.HasPrefix(file, "Contents-") ||
 			strings.HasPrefix(file, "Commands-") && !strings.HasPrefix(file, "Commands-"+repo.Arch) ||
 			strings.HasPrefix(file, "Components-") && !strings.HasPrefix(file, "Components-"+repo.Arch) ||
 			strings.HasPrefix(file, "Contents-") && !strings.HasPrefix(file, "Contents-"+repo.Arch) ||

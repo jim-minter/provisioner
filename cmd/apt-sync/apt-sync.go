@@ -6,7 +6,8 @@ import (
 
 	"provisioner/pkg/cache"
 	"provisioner/pkg/repo"
-	"provisioner/pkg/repo/docker"
+	"provisioner/pkg/repo/crio"
+	"provisioner/pkg/repo/kubernetes"
 	"provisioner/pkg/repo/ubuntu"
 )
 
@@ -39,10 +40,9 @@ func run() error {
 			Arch:      "amd64",
 		},
 		{
-			Base:      "https://download.docker.com/linux/ubuntu",
-			Suite:     "noble",
-			Component: "stable",
-			Arch:      "amd64",
+			Base:  "https://download.opensuse.org/repositories/isv:/cri-o:/stable:/v1.34/deb",
+			Suite: "/",
+			Arch:  "amd64",
 		},
 		{
 			Base:  "https://pkgs.k8s.io/core:/stable:/v1.34/deb",
@@ -75,7 +75,12 @@ func run() error {
 	}
 
 	// include any additional packages wanted in our requried set
-	if err := requiredPackages.Add(availablePackages, "docker-ce"); err != nil {
+	if err := requiredPackages.Add(availablePackages,
+		"cri-o",
+		"kubelet",
+		"kubeadm",
+		"kubectl",
+	); err != nil {
 		return err
 	}
 
@@ -95,7 +100,8 @@ func run() error {
 	for _, url := range []string{
 		ubuntu.NobleServerISOURL,
 		ubuntu.NobleServerNetbootURL,
-		docker.GPGPublicKeyURL,
+		crio.GPGPublicKeyURL,
+		kubernetes.GPGPublicKeyURL,
 	} {
 		if err := cache.Get(url); err != nil {
 			return err

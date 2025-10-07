@@ -6,7 +6,8 @@ import (
 	"net/http"
 	"os"
 	"provisioner/pkg/cache"
-	"provisioner/pkg/repo/docker"
+	"provisioner/pkg/repo/crio"
+	"provisioner/pkg/repo/kubernetes"
 
 	"github.com/go-crypt/crypt/algorithm/shacrypt"
 )
@@ -50,12 +51,22 @@ func (hs *HTTPServer) cloudConfig() ([]byte, error) {
 		return nil, err
 	}
 
-	dockerGPGPublicKeyLocalPath, err := cache.LocalPath(docker.GPGPublicKeyURL)
+	crioGPGPublicKeyLocalPath, err := cache.LocalPath(crio.GPGPublicKeyURL)
 	if err != nil {
 		return nil, err
 	}
 
-	dockerGPGPublicKey, err := os.ReadFile(dockerGPGPublicKeyLocalPath)
+	crioGPGPublicKey, err := os.ReadFile(crioGPGPublicKeyLocalPath)
+	if err != nil {
+		return nil, err
+	}
+
+	kubernetesGPGPublicKeyLocalPath, err := cache.LocalPath(kubernetes.GPGPublicKeyURL)
+	if err != nil {
+		return nil, err
+	}
+
+	kubernetesGPGPublicKey, err := os.ReadFile(kubernetesGPGPublicKeyLocalPath)
 	if err != nil {
 		return nil, err
 	}
@@ -80,9 +91,13 @@ func (hs *HTTPServer) cloudConfig() ([]byte, error) {
 					},
 				},
 				"sources": map[string]any{
-					"docker.list": map[string]any{
-						"source": "deb http://" + hs.ip + "/download.docker.com/linux/ubuntu $RELEASE stable",
-						"key":    string(dockerGPGPublicKey),
+					"crio.list": map[string]any{
+						"source": "deb http://" + hs.ip + "/download.opensuse.org/repositories/isv:/cri-o:/stable:/v1.34/deb/ /",
+						"key":    string(crioGPGPublicKey),
+					},
+					"kubernetes.list": map[string]any{
+						"source": "deb http://" + hs.ip + "/pkgs.k8s.io/core:/stable:/v1.34/deb/ /",
+						"key":    string(kubernetesGPGPublicKey),
 					},
 				},
 			},
@@ -95,7 +110,10 @@ func (hs *HTTPServer) cloudConfig() ([]byte, error) {
 				"flavor": "generic",
 			},
 			"packages": []any{
-				"docker-ce",
+				"cri-o",
+				"kubelet",
+				"kubeadm",
+				"kubectl",
 			},
 			"ssh": map[string]any{
 				"install-server": true,
