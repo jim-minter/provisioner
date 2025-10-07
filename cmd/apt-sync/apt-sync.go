@@ -44,6 +44,11 @@ func run() error {
 			Component: "stable",
 			Arch:      "amd64",
 		},
+		{
+			Base:  "https://pkgs.k8s.io/core:/stable:/v1.34/deb",
+			Suite: "/",
+			Arch:  "amd64",
+		},
 	}
 
 	requiredPackages := repo.RequiredPackages{}
@@ -81,7 +86,7 @@ func run() error {
 
 	// download needed packages
 	for _, pkg := range requiredPackages {
-		if err := cache.Get(pkg.Repo.Base+"/"+pkg.Filename, false); err != nil {
+		if err := cache.Get(pkg.Repo.Base + "/" + pkg.Filename); err != nil {
 			return err
 		}
 	}
@@ -90,9 +95,9 @@ func run() error {
 	for _, url := range []string{
 		ubuntu.NobleServerISOURL,
 		ubuntu.NobleServerNetbootURL,
-		docker.GPGPublicKey,
+		docker.GPGPublicKeyURL,
 	} {
-		if err := cache.Get(url, false); err != nil {
+		if err := cache.Get(url); err != nil {
 			return err
 		}
 	}

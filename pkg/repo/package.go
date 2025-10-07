@@ -8,15 +8,16 @@ import (
 )
 
 type Package struct {
-	Package    string
-	Version    *Version
-	Provides   []Expression
-	PreDepends []Expression
-	Depends    []Expression
-	Recommends []Expression
-	Filename   string
-	SHA256     []byte
-	Task       map[string]struct{}
+	Package      string
+	Version      *Version
+	Architecture string
+	Provides     []Expression
+	PreDepends   []Expression
+	Depends      []Expression
+	Recommends   []Expression
+	Filename     string
+	SHA256       []byte
+	Task         map[string]struct{}
 
 	Repo *Repo
 }
@@ -57,20 +58,21 @@ func (repo *Repo) newPackage(h textproto.MIMEHeader) (*Package, error) {
 	}
 
 	task := map[string]struct{}{}
-	for t := range strings.SplitSeq(h.Get("Task"), ", ") {
-		task[t] = struct{}{}
+	for t := range strings.SplitSeq(h.Get("Task"), ",") {
+		task[strings.TrimSpace(t)] = struct{}{}
 	}
 
 	return &Package{
-		Package:    h.Get("Package"),
-		Version:    version,
-		Provides:   provides,
-		PreDepends: preDepends,
-		Depends:    depends,
-		Recommends: recommends,
-		Filename:   h.Get("Filename"),
-		SHA256:     sha256,
-		Task:       task,
+		Package:      h.Get("Package"),
+		Version:      version,
+		Architecture: h.Get("Architecture"),
+		Provides:     provides,
+		PreDepends:   preDepends,
+		Depends:      depends,
+		Recommends:   recommends,
+		Filename:     h.Get("Filename"),
+		SHA256:       sha256,
+		Task:         task,
 
 		Repo: repo,
 	}, nil

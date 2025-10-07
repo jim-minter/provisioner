@@ -16,8 +16,8 @@ func parseExpressions(expr string) (exprs []Expression, _ error) {
 		return nil, nil
 	}
 
-	for s := range strings.SplitSeq(expr, ", ") {
-		expr, err := parseOrExpression(s)
+	for s := range strings.SplitSeq(expr, ",") {
+		expr, err := parseOrExpression(strings.TrimSpace(s))
 		if err != nil {
 			return nil, err
 		}
@@ -32,8 +32,8 @@ type OrExpression []Expression
 
 func parseOrExpression(expr string) (Expression, error) {
 	var orExpr OrExpression
-	for s := range strings.SplitSeq(expr, " | ") {
-		expr, err := parsePackageExpression(s)
+	for s := range strings.SplitSeq(expr, "|") {
+		expr, err := parsePackageExpression(strings.TrimSpace(s))
 		if err != nil {
 			return nil, err
 		}

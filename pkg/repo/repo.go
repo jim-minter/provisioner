@@ -2,12 +2,14 @@ package repo
 
 import (
 	"bufio"
+	"bytes"
 	"compress/gzip"
 	"io"
 	"net/http"
 	"net/textproto"
 	"os"
 	"path"
+	"strings"
 
 	"provisioner/pkg/cache"
 	"provisioner/pkg/errors"
@@ -21,23 +23,41 @@ type Repo struct {
 }
 
 func (repo *Repo) SyncMetadata() error {
+	suite := repo.Suite
+	if !strings.ContainsRune(suite, '/') {
+		suite = path.Join("dists", suite)
+	}
+
 	for _, remotePath := range []string{
-		path.Join("dists", repo.Suite, "InRelease"),
-		path.Join("dists", repo.Suite, "Release.gpg"),
-		path.Join("dists", repo.Suite, "Release"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "InRelease"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Packages.gz"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Packages.xz"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Packages"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Release.gpg"),
-		path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Release"),
-		path.Join("dists", repo.Suite, repo.Component, "cnf", "Commands-"+repo.Arch+".xz"),
-		path.Join("dists", repo.Suite, repo.Component, "dep11", "Components-"+repo.Arch+".yml.gz"),
-		path.Join("dists", repo.Suite, repo.Component, "dep11", "Components-"+repo.Arch+".yml.xz"),
-		path.Join("dists", repo.Suite, repo.Component, "i18n", "Translation-en.gz"),
-		path.Join("dists", repo.Suite, repo.Component, "i18n", "Translation-en.xz"),
+		path.Join(suite, "InRelease"),
+		path.Join(suite, "Release.gpg"),
+		path.Join(suite, "Release"),
 	} {
-		if err := cache.Get(repo.Base+"/"+remotePath, true); err != nil && err != errors.StatusCodeError(http.StatusNotFound) {
+		if err := cache.Get(repo.Base + "/" + remotePath); err != nil && err != errors.StatusCodeError(http.StatusNotFound) && err != errors.StatusCodeError(http.StatusForbidden) {
+			return err
+		}
+	}
+
+	release, err := repo.Release()
+	if err != nil {
+		return err
+	}
+
+	for _, hashEntry := range release.SHA256 {
+		dir, file := path.Split(hashEntry.Path)
+
+		if dir != "" && !strings.HasPrefix(dir, repo.Component+"/") ||
+			strings.Contains(dir, "/binary-") && !strings.Contains(dir, "/binary-"+repo.Arch) ||
+			strings.HasSuffix(dir, "/source/") ||
+			strings.HasPrefix(file, "Commands-") && !strings.HasPrefix(file, "Commands-"+repo.Arch) ||
+			strings.HasPrefix(file, "Components-") && !strings.HasPrefix(file, "Components-"+repo.Arch) ||
+			strings.HasPrefix(file, "Contents-") && !strings.HasPrefix(file, "Contents-"+repo.Arch) ||
+			strings.HasPrefix(file, "Translation-") && file != "Translation-en" && !strings.HasPrefix(file, "Translation-en.") ||
+			strings.HasPrefix(file, "icons-") {
+			continue
+		}
+
+		if err := cache.Get(repo.Base + "/" + path.Join(suite, hashEntry.Path)); err != nil && err != errors.StatusCodeError(http.StatusNotFound) && err != errors.StatusCodeError(http.StatusForbidden) {
 			return err
 		}
 	}
@@ -45,10 +65,53 @@ func (repo *Repo) SyncMetadata() error {
 	return nil
 }
 
-func (repo *Repo) Packages() (pkgs []*Package, _ error) {
-	localPath, err := cache.LocalPath(repo.Base + "/" + path.Join("dists", repo.Suite, repo.Component, "binary-"+repo.Arch, "Packages.gz"))
+func (repo *Repo) Release() (*Release, error) {
+	suite := repo.Suite
+	if !strings.ContainsRune(suite, '/') {
+		suite = path.Join("dists", suite)
+	}
+
+	localPath, err := cache.LocalPath(repo.Base + "/" + path.Join(suite, "Release"))
 	if err != nil {
 		return nil, err
+	}
+
+	f, err := os.Open(localPath)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+
+	tr := textproto.NewReader(bufio.NewReader(io.MultiReader(f, bytes.NewReader([]byte("\n\n")))))
+	h, err := tr.ReadMIMEHeader()
+	if err != nil {
+		return nil, err
+	}
+
+	return repo.newRelease(h)
+}
+
+func (repo *Repo) Packages() (pkgs []*Package, _ error) {
+	suite := repo.Suite
+	if !strings.ContainsRune(suite, '/') {
+		suite = path.Join("dists", suite)
+	}
+
+	var localPath string
+	for _, remotePath := range []string{
+		path.Join(suite, repo.Component, "Packages.gz"),
+		path.Join(suite, repo.Component, "binary-"+repo.Arch, "Packages.gz"),
+	} {
+		var err error
+		localPath, err = cache.LocalPath(repo.Base + "/" + remotePath)
+		if err != nil {
+			return nil, err
+		}
+
+		_, err = os.Stat(localPath)
+		if err == nil {
+			break
+		}
 	}
 
 	f, err := os.Open(localPath)

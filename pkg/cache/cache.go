@@ -33,7 +33,7 @@ func RemotePath(rawURL string) (string, error) {
 	return filepath.Join(u.Hostname(), u.Path), nil
 }
 
-func Get(url string, force bool) error {
+func Get(url string) error {
 	localPath, err := LocalPath(url)
 	if err != nil {
 		return err
@@ -42,7 +42,7 @@ func Get(url string, force bool) error {
 	localDir, localFile := path.Split(localPath)
 	localPathTemp := path.Join(localDir, "."+localFile)
 
-	if _, err := os.Stat(localPath); err == nil && !force {
+	if _, err := os.Stat(localPath); err == nil {
 		return nil
 	}
 

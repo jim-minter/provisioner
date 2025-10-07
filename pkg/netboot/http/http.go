@@ -50,7 +50,7 @@ func (hs *HTTPServer) cloudConfig() ([]byte, error) {
 		return nil, err
 	}
 
-	dockerGPGPublicKeyLocalPath, err := cache.LocalPath(docker.GPGPublicKey)
+	dockerGPGPublicKeyLocalPath, err := cache.LocalPath(docker.GPGPublicKeyURL)
 	if err != nil {
 		return nil, err
 	}
