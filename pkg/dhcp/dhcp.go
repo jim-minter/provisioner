@@ -1,33 +1,32 @@
 package dhcp
 
 import (
-	"bytes"
+	"context"
 	"log"
 	"net"
-	"slices"
 	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"provisioner/api/v1alpha1"
 )
 
 type DHCPServer struct {
-	iface string
-	mac   net.HardwareAddr
-	ipNet *net.IPNet
+	client client.Client
+	ipNet  *net.IPNet
 
 	server *server4.Server
 }
 
-func New(iface string, mac net.HardwareAddr, ipNet *net.IPNet) (*DHCPServer, error) {
+func New(client client.Client, ipNet *net.IPNet) (_ *DHCPServer, err error) {
 	ds := &DHCPServer{
-		iface: iface,
-		mac:   mac,
-		ipNet: ipNet,
+		client: client,
+		ipNet:  ipNet,
 	}
 
-	var err error
-	ds.server, err = server4.NewServer(iface, nil, ds.handle)
+	ds.server, err = server4.NewServer("eth0", nil, ds.handle)
 	if err != nil {
 		return nil, err
 	}
@@ -39,12 +38,23 @@ func (ds *DHCPServer) Serve() error {
 	return ds.server.Serve()
 }
 
+// +kubebuilder:rbac:groups=dummy.group,resources=machines,verbs=get
+
 func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
-	if !bytes.Equal(m.ClientHWAddr, ds.mac) {
+	ctx := context.Background()
+
+	machine := &v1alpha1.Machine{}
+	err := ds.client.Get(ctx, client.ObjectKey{Name: m.ClientHWAddr.String()}, machine)
+	if err != nil {
+		log.Print(err)
 		return
 	}
 
-	yourIP := incrementIP(ds.ipNet.IP)
+	yourIP := net.ParseIP(machine.Spec.IPAddress)
+	if yourIP == nil {
+		log.Printf("invalid IP address %q", machine.Spec.IPAddress)
+		return
+	}
 
 	resp, err := dhcpv4.NewReplyFromRequest(m,
 		dhcpv4.WithYourIP(yourIP),
@@ -52,7 +62,6 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		dhcpv4.WithOption(dhcpv4.OptServerIdentifier(ds.ipNet.IP)),
 		dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(time.Hour)),
 		dhcpv4.WithOption(dhcpv4.OptSubnetMask(ds.ipNet.Mask)),
-		dhcpv4.WithOption(dhcpv4.OptRouter(ds.ipNet.IP)), // https://bugs.launchpad.net/subiquity/+bug/2079222
 	)
 	if err != nil {
 		log.Print(err)
@@ -75,17 +84,4 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		log.Print(err)
 		return
 	}
-}
-
-func incrementIP(ip net.IP) net.IP {
-	ip = slices.Clone(ip.To4())
-
-	for i := len(ip) - 1; i >= 0; i-- {
-		ip[i]++
-		if ip[i] != 0 {
-			break
-		}
-	}
-
-	return ip
 }

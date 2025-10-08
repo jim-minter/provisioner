@@ -1,0 +1,3 @@
+FROM scratch
+COPY netboot netboot
+ENTRYPOINT [ "/netboot" ]
