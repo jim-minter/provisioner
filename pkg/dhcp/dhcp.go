@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
@@ -20,13 +21,13 @@ type DHCPServer struct {
 	server *server4.Server
 }
 
-func New(client client.Client, ipNet *net.IPNet) (_ *DHCPServer, err error) {
+func New(client client.Client, iface string, ipNet *net.IPNet) (_ *DHCPServer, err error) {
 	ds := &DHCPServer{
 		client: client,
 		ipNet:  ipNet,
 	}
 
-	ds.server, err = server4.NewServer("eth0", nil, ds.handle)
+	ds.server, err = server4.NewServer(iface, nil, ds.handle)
 	if err != nil {
 		return nil, err
 	}
@@ -44,7 +45,7 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 	ctx := context.Background()
 
 	machine := &v1alpha1.Machine{}
-	err := ds.client.Get(ctx, client.ObjectKey{Name: m.ClientHWAddr.String()}, machine)
+	err := ds.client.Get(ctx, client.ObjectKey{Name: strings.ReplaceAll(m.ClientHWAddr.String(), ":", "-")}, machine)
 	if err != nil {
 		log.Print(err)
 		return

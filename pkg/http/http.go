@@ -21,5 +21,5 @@ func New() *HTTPServer {
 }
 
 func (hs *HTTPServer) Serve() error {
-	return http.ListenAndServe("0.0.0.0:80", &logger{hs.mux})
+	return http.ListenAndServe(":80", &logger{hs.mux})
 }

@@ -73,7 +73,7 @@ func New() *TFTPServer {
 }
 
 func (ts *TFTPServer) Serve() error {
-	return ts.server.ListenAndServe("0.0.0.0:69")
+	return ts.server.ListenAndServe(":69")
 }
 
 func (ts *TFTPServer) handle(filename string, rf io.ReaderFrom) error {

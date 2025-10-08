@@ -10,6 +10,6 @@ netboot:
 	docker push $(USER).azurecr.io/netboot:latest
 	kubectl apply -f manifests
 	envsubst <netboot.yaml | kubectl apply -f -
-	kubectl rollout restart deployment/netboot
+	kubectl rollout restart -n netboot deployment/netboot
 
 .PHONY: all login netboot

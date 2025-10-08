@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
-	"slices"
+	"strings"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
@@ -41,12 +41,12 @@ func run() error {
 		return err
 	}
 
-	ipNet, err := interfaceIPNetv4("eth0")
+	iface, ipNet, err := getIPv4()
 	if err != nil {
 		return err
 	}
 
-	dhcps, err := dhcp.New(cli, ipNet)
+	dhcps, err := dhcp.New(cli, iface, ipNet)
 	if err != nil {
 		return err
 	}
@@ -71,24 +71,30 @@ func run() error {
 	return <-errch
 }
 
-func interfaceIPNetv4(name string) (*net.IPNet, error) {
-	iface, err := net.InterfaceByName(name)
+func getIPv4() (string, *net.IPNet, error) {
+	ifaces, err := net.Interfaces()
 	if err != nil {
-		return nil, err
+		return "", nil, err
 	}
 
-	addrs, err := iface.Addrs()
-	if err != nil {
-		return nil, err
+	for _, iface := range ifaces {
+		if !(strings.HasPrefix(iface.Name, "en") || strings.HasPrefix(iface.Name, "eth")) {
+			continue
+		}
+
+		addrs, err := iface.Addrs()
+		if err != nil {
+			return "", nil, err
+		}
+
+		for _, addr := range addrs {
+			ipNet, ok := addr.(*net.IPNet)
+			if ok && ipNet.IP.To4() != nil {
+				return iface.Name, ipNet, nil
+			}
+
+		}
 	}
 
-	i := slices.IndexFunc(addrs, func(addr net.Addr) bool {
-		ipNet, ok := addr.(*net.IPNet)
-		return ok && ipNet.IP.To4() != nil
-	})
-	if i == -1 {
-		return nil, fmt.Errorf("no IPv4 address found on interface %q", name)
-	}
-
-	return addrs[i].(*net.IPNet), nil
+	return "", nil, fmt.Errorf("no IPv4 address found")
 }
