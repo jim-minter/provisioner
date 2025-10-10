@@ -28,6 +28,8 @@ fi
 
 configure_networking
 
+# TODO: validate this image as it's received
+# TODO: other block devices (not vda)
 curl "$stage2" | gunzip >/dev/vda
 
 while ! [ -e /dev/vda1 ]; do sleep 1; done

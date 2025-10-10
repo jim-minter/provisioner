@@ -43,7 +43,7 @@ func (ts *TFTPServer) handle(filename string, rf io.ReaderFrom) (err error) {
 			"LABEL install",
 			"  KERNEL vmlinuz",
 			"  INITRD initrd.img",
-			"  APPEND ip=dhcp stage2=http://192.168.123.1:8000/ubuntu-2404-kube-v1.32.4.gz ds=nocloud;s=http://$IP/",
+			"  APPEND ip=dhcp stage2=http://192.168.123.1:8000/ubuntu-2404-kube-v1.32.4.gz ds=nocloud;s=http://$IP/", // TODO: hard-coded URL
 		}, "\n"), "$IP", ts.ip.String()))
 
 	default:

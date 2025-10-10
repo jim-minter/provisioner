@@ -26,6 +26,7 @@ func main() {
 }
 
 func run() error {
+	// TODO: remove this hack
 	for {
 		l, err := net.Listen("tcp", ":80")
 		if err == nil {
@@ -51,7 +52,7 @@ func run() error {
 		return err
 	}
 
-	iface, ipNet, err := getIPv4()
+	iface, ipNet, err := getIPv4() // TODO: IPv6
 	if err != nil {
 		return err
 	}

@@ -63,8 +63,8 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		dhcpv4.WithOption(dhcpv4.OptServerIdentifier(ds.ipNet.IP)),
 		dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(time.Hour)),
 		dhcpv4.WithOption(dhcpv4.OptSubnetMask(ds.ipNet.Mask)),
-		dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(192, 168, 123, 1))),
-		dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),
+		dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(192, 168, 123, 1))), // TODO: hard-coded IP; should remove in prod (disconnected) mode
+		dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),          // TODO: hard-coded IP; should remove in prod (disconnected) mode
 	)
 	if err != nil {
 		log.Print(err)
@@ -79,7 +79,7 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 	}
 
 	if m.IsOptionRequested(dhcpv4.OptionBootfileName) {
-		resp.UpdateOption(dhcpv4.OptBootFileName("amd64/pxelinux.0"))
+		resp.UpdateOption(dhcpv4.OptBootFileName("amd64/pxelinux.0")) // TODO: based on custom resource
 	}
 
 	_, err = conn.WriteTo(resp.ToBytes(), peer)

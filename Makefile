@@ -1,3 +1,4 @@
+# TODO: hard-coded container registry
 netboot: stage2 login
 	go generate ./...
 	CGO_ENABLED=0 go build ./cmd/netboot
@@ -8,6 +9,7 @@ netboot: stage2 login
 	kubectl rollout restart -n netboot deployment/netboot
 	kubectl rollout status -n netboot deployment/netboot
 
+# TODO: include netboot, flannel (for now) etc. in diskimage
 diskimage:
 	[ -e hack/image-builder ] || git clone -b v0.1.46 --depth=1 https://github.com/kubernetes-sigs/image-builder hack
 	$(MAKE) -C hack/image-builder build-raw-ubuntu-2404

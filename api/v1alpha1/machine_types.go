@@ -31,4 +31,6 @@ type MachineSpec struct {
 	// +required
 	// +kubebuilder:validation:Pattern="^[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}$"
 	IPAddress string `json:"ipAddress"`
+
+	// TODO: hostname, role, etc.
 }
