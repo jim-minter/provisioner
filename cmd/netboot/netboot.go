@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
@@ -42,14 +42,11 @@ func run() error {
 		return err
 	}
 
-	var scheme = runtime.NewScheme()
-	if err = v1alpha1.AddToScheme(scheme); err != nil {
+	if err = v1alpha1.AddToScheme(scheme.Scheme); err != nil {
 		return err
 	}
 
-	cli, err := client.New(config, client.Options{
-		Scheme: scheme,
-	})
+	cli, err := client.New(config, client.Options{})
 	if err != nil {
 		return err
 	}
@@ -64,8 +61,8 @@ func run() error {
 		return err
 	}
 
-	tftps := tftp.New()
-	https := http.New()
+	tftps := tftp.New(ipNet.IP)
+	https := http.New(cli)
 
 	errch := make(chan error, 3)
 

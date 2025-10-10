@@ -63,6 +63,8 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		dhcpv4.WithOption(dhcpv4.OptServerIdentifier(ds.ipNet.IP)),
 		dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(time.Hour)),
 		dhcpv4.WithOption(dhcpv4.OptSubnetMask(ds.ipNet.Mask)),
+		dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(192, 168, 123, 1))),
+		dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),
 	)
 	if err != nil {
 		log.Print(err)

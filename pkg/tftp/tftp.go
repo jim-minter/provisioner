@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"log"
+	"net"
 	"strings"
 
 	"github.com/pin/tftp"
@@ -12,11 +13,15 @@ import (
 )
 
 type TFTPServer struct {
+	ip net.IP
+
 	server *tftp.Server
 }
 
-func New() *TFTPServer {
-	ts := &TFTPServer{}
+func New(ip net.IP) *TFTPServer {
+	ts := &TFTPServer{
+		ip: ip,
+	}
 
 	ts.server = tftp.NewServer(ts.handle, nil)
 
@@ -33,13 +38,13 @@ func (ts *TFTPServer) handle(filename string, rf io.ReaderFrom) (err error) {
 	var b []byte
 	switch filename {
 	case "amd64/pxelinux.cfg/default":
-		b = []byte(strings.Join([]string{
+		b = []byte(strings.ReplaceAll(strings.Join([]string{
 			"DEFAULT install",
 			"LABEL install",
 			"  KERNEL vmlinuz",
 			"  INITRD initrd.img",
-			"  APPEND ip=dhcp stage2=http://192.168.123.1:8000/ubuntu-2404-kube-v1.32.4.gz ds=nocloud;s=http://192.168.123.1:8000/cloud-init/",
-		}, "\n"))
+			"  APPEND ip=dhcp stage2=http://192.168.123.1:8000/ubuntu-2404-kube-v1.32.4.gz ds=nocloud;s=http://$IP/",
+		}, "\n"), "$IP", ts.ip.String()))
 
 	default:
 		b, err = assets.Assets.ReadFile(filename)
