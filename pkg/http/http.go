@@ -15,24 +15,28 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"strings"
 	"time"
 
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+
+	"provisioner/api/v1alpha1"
 )
 
 type HTTPServer struct {
 	client client.Client
+	cache  cache.Cache
 	ip     net.IP
 
 	mux *http.ServeMux
 }
 
-func New(client client.Client, ip net.IP) *HTTPServer {
+func New(client client.Client, cache cache.Cache, ip net.IP) *HTTPServer {
 	hs := &HTTPServer{
 		client: client,
+		cache:  cache,
 		ip:     ip,
 
 		mux: &http.ServeMux{},
@@ -50,14 +54,30 @@ func (hs *HTTPServer) Serve() error {
 }
 
 func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
-	token, err := hs.bootstrapToken(r.Context())
+	ctx := r.Context()
+
+	remoteIP, _, err := net.SplitHostPort(r.RemoteAddr)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
 		return
 	}
 
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	machines := &v1alpha1.MachineList{}
+	err = hs.cache.List(ctx, machines, client.MatchingFields{"spec.ipAddress": remoteIP}, client.Limit(2))
+	if err != nil {
+		log.Print(err)
+		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
+		return
+	}
+
+	if len(machines.Items) != 1 {
+		log.Printf("%d items found for IP %q", len(machines.Items), remoteIP)
+		http.Error(w, http.StatusText(http.StatusNotFound), http.StatusNotFound)
+		return
+	}
+
+	token, err := hs.bootstrapToken(ctx)
 	if err != nil {
 		log.Print(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)
@@ -72,8 +92,8 @@ func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
 		"runcmd": []any{
 			"kubeadm join " + hs.ip.String() + ":6443 --token " + token + " --discovery-token-ca-cert-hash " + caCertHash,
 		},
-		// TODO: based on custom resource
-		"hostname": "node-" + strings.ReplaceAll(host, ".", "-"),
+		"fqdn":                      machines.Items[0].Name,
+		"prefer_fqdn_over_hostname": true,
 	}
 
 	b, err := json.Marshal(userData)

@@ -29,8 +29,12 @@ type Machine struct {
 
 type MachineSpec struct {
 	// +required
-	// +kubebuilder:validation:Pattern="^[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}\\.[1-9][0-9]{0,2}$"
+	// +kubebuilder:validation:Pattern="^([0-9a-f]{2}:){5}[0-9a-f]{2}$"
+	MacAddress string `json:"macAddress"`
+
+	// +required
+	// +kubebuilder:validation:Pattern="^([1-9][0-9]{0,2}\\.){3}[1-9][0-9]{0,2}$"
 	IPAddress string `json:"ipAddress"`
 
-	// TODO: hostname, role, etc.
+	// TODO: role, etc.
 }

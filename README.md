@@ -19,8 +19,9 @@ $ kubectl create -f - <<'EOF'
 apiVersion: dummy.group/v1alpha1
 kind: Machine
 metadata:
-  name: 11-22-33-44-55-66
+  name: hostname
 spec:
+  macAddress: 11:22:33:44:55:66
   ipAddress: 1.2.3.4
 EOF
 ```
