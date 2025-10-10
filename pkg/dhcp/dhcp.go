@@ -8,20 +8,18 @@ import (
 
 	"github.com/insomniacslk/dhcp/dhcpv4"
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 
-	"provisioner/api/v1alpha1"
+	"provisioner/pkg/cache"
 )
 
 type DHCPServer struct {
-	cache cache.Cache
+	cache *cache.Cache
 	ipNet *net.IPNet
 
 	server *server4.Server
 }
 
-func New(cache cache.Cache, iface string, ipNet *net.IPNet) (_ *DHCPServer, err error) {
+func New(cache *cache.Cache, iface string, ipNet *net.IPNet) (_ *DHCPServer, err error) {
 	ds := &DHCPServer{
 		cache: cache,
 		ipNet: ipNet,
@@ -44,21 +42,15 @@ func (ds *DHCPServer) Serve() error {
 func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv4) {
 	ctx := context.Background()
 
-	machines := &v1alpha1.MachineList{}
-	err := ds.cache.List(ctx, machines, client.MatchingFields{"spec.macAddress": m.ClientHWAddr.String()}, client.Limit(2))
+	machine, err := ds.cache.Get(ctx, cache.ByMAC, m.ClientHWAddr.String())
 	if err != nil {
 		log.Print(err)
 		return
 	}
 
-	if len(machines.Items) != 1 {
-		log.Printf("%d items found for mac %q", len(machines.Items), m.ClientHWAddr)
-		return
-	}
-
-	yourIP := net.ParseIP(machines.Items[0].Spec.IPAddress)
+	yourIP := net.ParseIP(machine.Spec.IPAddress)
 	if yourIP == nil {
-		log.Printf("invalid IP address %q", machines.Items[0].Spec.IPAddress)
+		log.Printf("invalid IP address %q", machine.Spec.IPAddress)
 		return
 	}
 

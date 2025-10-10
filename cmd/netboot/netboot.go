@@ -10,12 +10,11 @@ import (
 	"time"
 
 	"k8s.io/client-go/kubernetes/scheme"
-	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
-	"sigs.k8s.io/controller-runtime/pkg/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"provisioner/api/v1alpha1"
+	"provisioner/pkg/cache"
 	"provisioner/pkg/dhcp"
 	"provisioner/pkg/http"
 	"provisioner/pkg/tftp"
@@ -55,7 +54,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	cache, err := getCache(ctx, config)
+	cache, err := cache.New(ctx, config)
 	if err != nil {
 		return err
 	}
@@ -70,7 +69,7 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	tftps := tftp.New(ipNet.IP)
+	tftps := tftp.New(cache, ipNet.IP)
 	https := http.New(client, cache, ipNet.IP)
 
 	errch := make(chan error, 3)
@@ -116,37 +115,4 @@ func getIPv4() (string, *net.IPNet, error) {
 	}
 
 	return "", nil, fmt.Errorf("no IPv4 address found")
-}
-
-func getCache(ctx context.Context, config *rest.Config) (cache.Cache, error) {
-	cache, err := cache.New(config, cache.Options{})
-	if err != nil {
-		return nil, err
-	}
-
-	if _, err = cache.GetInformer(ctx, &v1alpha1.Machine{}); err != nil {
-		return nil, err
-	}
-
-	if err = cache.IndexField(ctx, &v1alpha1.Machine{}, "spec.macAddress", func(o client.Object) []string {
-		return []string{o.(*v1alpha1.Machine).Spec.MacAddress}
-	}); err != nil {
-		return nil, err
-	}
-
-	if err = cache.IndexField(ctx, &v1alpha1.Machine{}, "spec.ipAddress", func(o client.Object) []string {
-		return []string{o.(*v1alpha1.Machine).Spec.IPAddress}
-	}); err != nil {
-		return nil, err
-	}
-
-	go func() {
-		panic(cache.Start(ctx))
-	}()
-
-	if !cache.WaitForCacheSync(ctx) {
-		return nil, fmt.Errorf("could not sync")
-	}
-
-	return cache, nil
 }
