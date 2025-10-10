@@ -28,13 +28,22 @@ fi
 
 configure_networking
 
+for i in /sys/block/*; do
+	case $(readlink "$i") in
+        ../devices/virtual/*)
+            ;;
+        *)
+            dev=/dev/$(basename "$i")
+            break
+	esac
+done
+
 # TODO: validate this image as it's received
-# TODO: other block devices (not vda)
-curl "$stage2" | gunzip >/dev/vda
+curl "$stage2" | gunzip >"$dev"
 
-while ! [ -e /dev/vda1 ]; do sleep 1; done
+blockdev --rereadpt "$dev"
 
-mount /dev/vda1 /root
+mount "${dev}1" /root
 mount --bind /dev /root/dev
 mount --bind /proc /root/proc
 
