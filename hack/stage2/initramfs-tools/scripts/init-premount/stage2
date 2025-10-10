@@ -1,0 +1,51 @@
+#!/bin/sh -e
+
+if [ "$1" = prereqs ]; then
+    echo
+    exit 0
+fi
+
+. /scripts/functions
+
+for arg in $(cat /proc/cmdline); do
+	case $arg in
+        stage2=*)
+            stage2="${arg#stage2=}"
+            ;;
+        ds=*)
+            ds="${arg#ds=}"
+            ;;
+	esac
+done
+
+if [ -z "$stage2" ]; then
+    panic "stage2= not set on cmdline"
+fi
+
+if [ -z "$ds" ]; then
+    panic "ds= not set on cmdline"
+fi
+
+configure_networking
+
+curl "$stage2" | gunzip >/dev/vda
+
+while ! [ -e /dev/vda1 ]; do sleep 1; done
+
+mount /dev/vda1 /root
+mount --bind /dev /root/dev
+mount --bind /proc /root/proc
+
+cat >/root/etc/default/grub.d/90-stage2.cfg <<EOF
+GRUB_CMDLINE_LINUX_DEFAULT="console=tty1 console=ttyS0 'ds=$ds'"
+EOF
+
+chroot /root update-grub
+
+umount /root/proc
+umount /root/dev
+umount /root
+
+sync
+
+reboot -f

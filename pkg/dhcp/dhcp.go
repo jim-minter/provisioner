@@ -77,7 +77,7 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 	}
 
 	if m.IsOptionRequested(dhcpv4.OptionBootfileName) {
-		resp.UpdateOption(dhcpv4.OptBootFileName("/amd64/pxelinux.0"))
+		resp.UpdateOption(dhcpv4.OptBootFileName("amd64/pxelinux.0"))
 	}
 
 	_, err = conn.WriteTo(resp.ToBytes(), peer)

@@ -2,9 +2,11 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net"
 	"os"
 	"strings"
+	"time"
 
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/tools/clientcmd"
@@ -24,6 +26,17 @@ func main() {
 }
 
 func run() error {
+	for {
+		l, err := net.Listen("tcp", ":80")
+		if err == nil {
+			l.Close()
+			break
+		}
+
+		log.Print("waiting")
+		time.Sleep(time.Second)
+	}
+
 	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
 	if err != nil {
 		return err
