@@ -63,7 +63,7 @@ func run() error {
 	}
 
 	tftps := tftp.New(ipNet.IP)
-	https := http.New(cli)
+	https := http.New(cli, ipNet.IP)
 
 	errch := make(chan error, 3)
 
