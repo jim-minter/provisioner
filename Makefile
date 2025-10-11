@@ -6,8 +6,8 @@ netboot: stage2 login
 	docker push $(USER).azurecr.io/netboot:latest
 	kubectl apply -f manifests
 	envsubst <netboot.yaml | kubectl apply -f -
-	kubectl rollout restart -n netboot deployment/netboot
-	kubectl rollout status -n netboot deployment/netboot
+	kubectl delete pod -n netboot -l app=netboot
+	kubectl wait --for jsonpath=status.readyReplicas=1 -n netboot replicaset/netboot
 
 # TODO: include netboot, flannel (for now) etc. in diskimage
 diskimage:

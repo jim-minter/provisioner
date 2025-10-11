@@ -37,7 +37,7 @@ subjects:
   name: netboot
 --- 
 apiVersion: apps/v1
-kind: Deployment
+kind: ReplicaSet
 metadata:
   namespace: netboot
   name: netboot
