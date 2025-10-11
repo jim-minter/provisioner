@@ -52,9 +52,17 @@ spec:
         app: netboot
     spec:
       containers:
-      - name: netboot
+      - env:
+        - name: DEVELOPMENT_DEFAULT_GATEWAY
+          value: "$DEVELOPMENT_DEFAULT_GATEWAY"
+        - name: DEVELOPMENT_NAMESERVERS
+          value: "$DEVELOPMENT_NAMESERVERS"
+        - name: DEVELOPMENT_SSH_AUTHORIZED_KEY
+          value: "$DEVELOPMENT_SSH_AUTHORIZED_KEY"
+        name: netboot
         image: $USER.azurecr.io/netboot:latest
       hostNetwork: true
+      nodeName: localhost
       serviceAccountName: netboot
       tolerations:
       - key: node-role.kubernetes.io/control-plane

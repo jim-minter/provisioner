@@ -13,6 +13,10 @@ It responds to DHCP queries based on the existence of Machine.dummy.group
 objects.
 
 ```shell
+$ cp env.example env
+$ vi env
+$ . ./env
+
 $ make
 
 $ kubectl create -f - <<'EOF'

@@ -22,6 +22,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"provisioner/pkg/cache"
+	"provisioner/pkg/development"
 )
 
 type HTTPServer struct {
@@ -77,9 +78,8 @@ func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userData := map[string]any{
-		// TODO: hard-coded public key
 		"ssh_authorized_keys": []any{
-			"ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCyJkNEKCvLD66gesir0+Z2l6Nrq1j5id3L+Cttrgs7Xv9FU6Gaare6yAUkBq5gkKNeS0PJHZDDX9HwCX4Yghy/cbnBeXuzPppDkR6wIHKzUOKuYZfFW76Gl4he8ZNJGpn6QEoY4uKAxRpRg/elwvKfyuJ6Iw5F/fimSI7LyqRsj/CtnGLZ7PPpxdVPSSEEoXPaE2aWn8L67t6kT7iKqexRRAcyl6271/U3yIp4I0ZbpJnDSgqtwLZ/L93AEa/w4L7kykvuxtEd6vIbEULUy4BWCGiQi2ENJOdPkbkQuq6ugbGxJ5Dwvkxa4Nvz3c4VVKLdXZIByC/RU5PjF/KDXc5G6i1CbhNNTLa8pCFDWA1xOWzdjTK0UkGcRsbT+GL3Is1/ZQlqvl1sLKqsYpN8HQxOrHO4flIsMb+KTe722P/Nhj+i65dBb546GNuDx4JNNCmOjNc9XQwZm1llou7CXNuhvmCJB7ee6pJ4VTGM+1xTSqU6x6qQ730k/Z7AtPy2Na8= t540p@t540p",
+			development.Config.SshAuthorizedKey,
 		},
 		"runcmd": []any{
 			"kubeadm join " + hs.ip.String() + ":6443 --token " + token + " --discovery-token-ca-cert-hash " + caCertHash,

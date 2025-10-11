@@ -10,6 +10,7 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 
 	"provisioner/pkg/cache"
+	"provisioner/pkg/development"
 )
 
 type DHCPServer struct {
@@ -60,12 +61,18 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		dhcpv4.WithOption(dhcpv4.OptServerIdentifier(ds.ipNet.IP)),
 		dhcpv4.WithOption(dhcpv4.OptIPAddressLeaseTime(time.Hour)),
 		dhcpv4.WithOption(dhcpv4.OptSubnetMask(ds.ipNet.Mask)),
-		dhcpv4.WithOption(dhcpv4.OptRouter(net.IPv4(192, 168, 123, 1))), // TODO: hard-coded IP; should remove in prod (disconnected) mode
-		dhcpv4.WithOption(dhcpv4.OptDNS(net.IPv4(8, 8, 8, 8))),          // TODO: hard-coded IP; should remove in prod (disconnected) mode
 	)
 	if err != nil {
 		log.Print(err)
 		return
+	}
+
+	if development.Config.DefaultGateway != nil {
+		resp.UpdateOption(dhcpv4.OptRouter(development.Config.DefaultGateway))
+	}
+
+	if development.Config.Nameservers != nil {
+		resp.UpdateOption(dhcpv4.OptDNS(development.Config.Nameservers...))
 	}
 
 	switch mt := m.MessageType(); mt {
