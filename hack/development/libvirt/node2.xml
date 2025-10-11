@@ -1,0 +1,24 @@
+<domain type='kvm'>
+  <name>node2</name>
+  <memory unit='GiB'>8</memory>
+  <vcpu>2</vcpu>
+  <os>
+    <type>hvm</type>
+  </os>
+  <cpu mode='host-passthrough'/>
+  <devices>
+    <disk type='file' device='disk'>
+      <driver name='qemu' type='qcow2' discard='unmap'/>
+      <source file='$PWD/node2.qcow2'/>
+      <target dev='vda' bus='virtio'/>
+      <boot order='1'/>
+    </disk>
+    <interface type='network'>
+      <mac address='52:54:00:32:0d:b8'/>
+      <source network='apollo'/>
+      <model type='virtio'/>
+      <boot order='2'/>
+    </interface>
+    <graphics type='vnc' autoport='yes'/>
+  </devices>
+</domain>

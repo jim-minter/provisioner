@@ -1,4 +1,4 @@
-package http
+package httputil
 
 import (
 	"log"
@@ -16,18 +16,18 @@ func (lrw *loggingResponseWriter) WriteHeader(statusCode int) {
 	lrw.ResponseWriter.WriteHeader(statusCode)
 }
 
-type logger struct {
+type Logger struct {
 	http.Handler
 }
 
-func (l *logger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (l *Logger) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	lrw := &loggingResponseWriter{ResponseWriter: w, statusCode: http.StatusOK}
 	l.Handler.ServeHTTP(lrw, r)
 	log.Print(r.URL, lrw.statusCode)
 }
 
-type file []byte
+type File []byte
 
-func (f file) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+func (f File) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Write(f)
 }

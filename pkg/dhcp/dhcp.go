@@ -71,8 +71,8 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		resp.UpdateOption(dhcpv4.OptRouter(development.Config.DefaultGateway))
 	}
 
-	if development.Config.Nameservers != nil {
-		resp.UpdateOption(dhcpv4.OptDNS(development.Config.Nameservers...))
+	if development.Config.Nameserver != nil {
+		resp.UpdateOption(dhcpv4.OptDNS(development.Config.Nameserver))
 	}
 
 	switch mt := m.MessageType(); mt {

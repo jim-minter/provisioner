@@ -23,6 +23,7 @@ import (
 
 	"provisioner/pkg/cache"
 	"provisioner/pkg/development"
+	"provisioner/pkg/httputil"
 )
 
 type HTTPServer struct {
@@ -42,15 +43,15 @@ func New(client client.Client, cache *cache.Cache, ip net.IP) *HTTPServer {
 		mux: &http.ServeMux{},
 	}
 
-	hs.mux.Handle("GET /meta-data", file(nil))
-	hs.mux.Handle("GET /vendor-data", file(nil))
+	hs.mux.Handle("GET /meta-data", httputil.File(nil))
+	hs.mux.Handle("GET /vendor-data", httputil.File(nil))
 	hs.mux.HandleFunc("GET /user-data", hs.userData)
 
 	return hs
 }
 
 func (hs *HTTPServer) Serve() error {
-	return http.ListenAndServe(":80", &logger{hs.mux})
+	return http.ListenAndServe(":80", &httputil.Logger{Handler: hs.mux})
 }
 
 func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
@@ -78,14 +79,17 @@ func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	userData := map[string]any{
-		"ssh_authorized_keys": []any{
-			development.Config.SshAuthorizedKey,
-		},
 		"runcmd": []any{
 			"kubeadm join " + hs.ip.String() + ":6443 --token " + token + " --discovery-token-ca-cert-hash " + caCertHash,
 		},
 		"fqdn":                      machine.Name,
 		"prefer_fqdn_over_hostname": true,
+	}
+
+	if development.Config.SshAuthorizedKey != "" {
+		userData["ssh_authorized_keys"] = []any{
+			development.Config.SshAuthorizedKey,
+		}
 	}
 
 	b, err := json.Marshal(userData)

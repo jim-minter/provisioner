@@ -1,0 +1,6 @@
+<network>
+  <name>apollo</name>
+  <bridge name='apollo' stp='on' delay='0'/>
+  <mac address='52:54:00:bb:78:0b'/>
+  <ip address='192.168.123.1' netmask='255.255.255.0' />
+</network>
