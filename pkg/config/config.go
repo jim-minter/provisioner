@@ -25,6 +25,8 @@ type Config struct {
 	}
 
 	AuthorizedKeys []string
+
+	Registry string
 }
 
 func Load() (*Config, error) {

@@ -1,4 +1,6 @@
-all: stage2 netboot hack/image-builder/images/capi/output bootstrap-imageserver libvirt
+REGISTRY = $(shell go run ./cmd/config '{{ .Registry }}')
+
+all: stage2 netboot hack/image-builder/images/capi/output bootstrap-imageserver
 
 stage2:
 	mkdir -p pkg/tftp/assets/amd64
@@ -9,14 +11,13 @@ stage2:
 netboot: stage2
 	go generate ./...
 	CGO_ENABLED=0 go build ./cmd/netboot
-	docker build -t $(USER).azurecr.io/netboot:latest -f Dockerfile.netboot .
-	@docker login -u 00000000-0000-0000-0000-000000000000 -p $(shell az acr login -n $(USER) --expose-token --query accessToken -o tsv 2>/dev/null) $(USER).azurecr.io
-	docker push $(USER).azurecr.io/netboot:latest
+	docker build -t $(REGISTRY)/netboot:latest -f Dockerfile.netboot .
+	docker push $(REGISTRY)/netboot:latest
 
 netboot-deploy: netboot
 	kubectl apply -f manifests
-	kubectl create configmap -n netboot netboot --from-file=provisioner.yaml --dry-run=client -o yaml | kubectl apply -f -
 	go run ./cmd/config <netboot.yaml | kubectl apply -f -
+	kubectl create configmap -n netboot netboot --from-file=provisioner.yaml --dry-run=client -o yaml | kubectl apply -f -
 	kubectl delete pod -n netboot -l app=netboot
 	kubectl wait --for jsonpath=status.readyReplicas=1 -n netboot replicaset/netboot
 
@@ -31,4 +32,4 @@ bootstrap-imageserver: hack/image-builder/images/capi/output
 libvirt: hack/image-builder/images/capi/output
 	$(MAKE) -C hack/development/libvirt
 
-.PHONY: all bootstrap-imageserver stage2 netboot libvirt
+.PHONY: all stage2 netboot netboot-deploy bootstrap-imageserver libvirt

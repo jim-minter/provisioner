@@ -53,7 +53,7 @@ spec:
     spec:
       containers:
       - name: netboot
-        image: '{{ env "USER" }}.azurecr.io/netboot:latest'
+        image: '{{ .Registry }}/netboot:latest'
         volumeMounts:
         - mountPath: /provisioner.yaml
           readOnly: true

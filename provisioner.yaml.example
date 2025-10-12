@@ -9,5 +9,7 @@ network:
   gateway: *host.ip    # development only
   nameserver: 8.8.8.8  # development only
 
+registry: YOUR-REGISTRY  # TODO: update this
+
 authorizedkeys:
-- ssh-rsa ... # TODO: update this
+- YOUR-SSH-PUBLIC-KEY  # TODO: update this
