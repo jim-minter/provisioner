@@ -5,6 +5,9 @@
   <os>
     <type>hvm</type>
   </os>
+  <features>
+    <acpi/>
+  </features>
   <cpu mode='host-passthrough'/>
   <devices>
     <disk type='file' device='disk'>

@@ -82,7 +82,7 @@ func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
 
 	userData := map[string]any{
 		"runcmd": []any{
-			"kubeadm join " + hs.ip.String() + ":6443 --token " + token + " --discovery-token-ca-cert-hash " + caCertHash,
+			"kubeadm join " + hs.config.Laptop.IP.String() + ":6443 --token " + token + " --discovery-token-ca-cert-hash " + caCertHash,
 		},
 		"fqdn":                      machine.Name,
 		"prefer_fqdn_over_hostname": true,

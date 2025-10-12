@@ -8,6 +8,9 @@
     <initrd>{{ env "PWD" }}/initrd.img</initrd>
     <cmdline>root=/dev/vda1 ro console=tty1 console=ttyS0 ip={{ .Laptop.IP }}::{{ .Network.Gateway }}:{{ .Network.IPNet.MaskAsIP }}::::{{ .Network.Nameserver }} ds=nocloud;s=http://{{ .Host.IP }}:8000/</cmdline>
   </os>
+  <features>
+    <acpi/>
+  </features>
   <cpu mode='host-passthrough'/>
   <devices>
     <disk type='file' device='disk'>
