@@ -15,7 +15,8 @@ netboot: stage2
 
 netboot-deploy: netboot
 	kubectl apply -f manifests
-	envsubst <netboot.yaml | kubectl apply -f -
+	kubectl create configmap -n netboot netboot --from-file=provisioner.yaml --dry-run=client -o yaml | kubectl apply -f -
+	go run ./cmd/config <netboot.yaml | kubectl apply -f -
 	kubectl delete pod -n netboot -l app=netboot
 	kubectl wait --for jsonpath=status.readyReplicas=1 -n netboot replicaset/netboot
 

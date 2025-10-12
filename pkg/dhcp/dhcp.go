@@ -10,20 +10,22 @@ import (
 	"github.com/insomniacslk/dhcp/dhcpv4/server4"
 
 	"provisioner/pkg/cache"
-	"provisioner/pkg/development"
+	"provisioner/pkg/config"
 )
 
 type DHCPServer struct {
-	cache *cache.Cache
-	ipNet *net.IPNet
+	config *config.Config
+	cache  *cache.Cache
+	ipNet  *net.IPNet
 
 	server *server4.Server
 }
 
-func New(cache *cache.Cache, iface string, ipNet *net.IPNet) (_ *DHCPServer, err error) {
+func New(config *config.Config, cache *cache.Cache, iface string, ipNet *net.IPNet) (_ *DHCPServer, err error) {
 	ds := &DHCPServer{
-		cache: cache,
-		ipNet: ipNet,
+		config: config,
+		cache:  cache,
+		ipNet:  ipNet,
 	}
 
 	ds.server, err = server4.NewServer(iface, nil, ds.handle)
@@ -67,12 +69,12 @@ func (ds *DHCPServer) handle(conn net.PacketConn, peer net.Addr, m *dhcpv4.DHCPv
 		return
 	}
 
-	if development.Config.DefaultGateway != nil {
-		resp.UpdateOption(dhcpv4.OptRouter(development.Config.DefaultGateway))
+	if len(ds.config.Network.Gateway) > 0 {
+		resp.UpdateOption(dhcpv4.OptRouter(ds.config.Network.Gateway))
 	}
 
-	if development.Config.Nameserver != nil {
-		resp.UpdateOption(dhcpv4.OptDNS(development.Config.Nameserver))
+	if len(ds.config.Network.Nameserver) > 0 {
+		resp.UpdateOption(dhcpv4.OptDNS(ds.config.Network.Nameserver))
 	}
 
 	switch mt := m.MessageType(); mt {

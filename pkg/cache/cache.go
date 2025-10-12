@@ -21,10 +21,10 @@ type Cache struct {
 	cache cache.Cache
 }
 
-func New(ctx context.Context, config *rest.Config) (_ *Cache, err error) {
+func New(ctx context.Context, restconfig *rest.Config) (_ *Cache, err error) {
 	c := &Cache{}
 
-	c.cache, err = cache.New(config, cache.Options{})
+	c.cache, err = cache.New(restconfig, cache.Options{})
 	if err != nil {
 		return nil, err
 	}

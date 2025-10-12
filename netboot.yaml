@@ -52,18 +52,20 @@ spec:
         app: netboot
     spec:
       containers:
-      - env:
-        - name: DEVELOPMENT_DEFAULT_GATEWAY
-          value: "$DEVELOPMENT_DEFAULT_GATEWAY"
-        - name: DEVELOPMENT_NAMESERVER
-          value: "$DEVELOPMENT_NAMESERVER"
-        - name: DEVELOPMENT_SSH_AUTHORIZED_KEY
-          value: "$DEVELOPMENT_SSH_AUTHORIZED_KEY"
-        name: netboot
-        image: $USER.azurecr.io/netboot:latest
+      - name: netboot
+        image: '{{ env "USER" }}.azurecr.io/netboot:latest'
+        volumeMounts:
+        - mountPath: /provisioner.yaml
+          readOnly: true
+          subPath: provisioner.yaml
+          name: netboot
       hostNetwork: true
       nodeName: laptop
       serviceAccountName: netboot
       tolerations:
       - key: node-role.kubernetes.io/control-plane
         operator: Exists
+      volumes:
+      - configMap:
+          name: netboot
+        name: netboot

@@ -13,6 +13,7 @@ import (
 
 	"provisioner/api/v1alpha1"
 	"provisioner/pkg/cache"
+	"provisioner/pkg/config"
 	"provisioner/pkg/dhcp"
 	"provisioner/pkg/http"
 	"provisioner/pkg/tftp"
@@ -26,7 +27,12 @@ func main() {
 }
 
 func run(ctx context.Context) error {
-	config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
+	config, err := config.Load()
+	if err != nil {
+		return err
+	}
+
+	restconfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(clientcmd.NewDefaultClientConfigLoadingRules(), nil).ClientConfig()
 	if err != nil {
 		return err
 	}
@@ -35,12 +41,12 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	client, err := client.New(config, client.Options{})
+	client, err := client.New(restconfig, client.Options{})
 	if err != nil {
 		return err
 	}
 
-	cache, err := cache.New(ctx, config)
+	cache, err := cache.New(ctx, restconfig)
 	if err != nil {
 		return err
 	}
@@ -50,13 +56,13 @@ func run(ctx context.Context) error {
 		return err
 	}
 
-	dhcps, err := dhcp.New(cache, iface, ipNet)
+	dhcps, err := dhcp.New(config, cache, iface, ipNet)
 	if err != nil {
 		return err
 	}
 
-	tftps := tftp.New(cache, ipNet.IP)
-	https := http.New(client, cache, ipNet.IP)
+	tftps := tftp.New(config, cache, ipNet.IP)
+	https := http.New(config, client, cache, ipNet.IP)
 
 	errch := make(chan error, 3)
 

@@ -9,7 +9,7 @@
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' discard='unmap'/>
-      <source file='$PWD/node2.qcow2'/>
+      <source file='{{ env "PWD" }}/node2.qcow2'/>
       <target dev='vda' bus='virtio'/>
       <boot order='1'/>
     </disk>

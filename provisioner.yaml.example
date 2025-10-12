@@ -1,0 +1,13 @@
+host:
+  ip: &host.ip 192.168.123.1
+
+laptop:
+  ip: 192.168.123.2
+
+network:
+  ipnet: 192.168.123.0/24
+  gateway: *host.ip    # development only
+  nameserver: 8.8.8.8  # development only
+
+authorizedkeys:
+- ssh-rsa ... # TODO: update this

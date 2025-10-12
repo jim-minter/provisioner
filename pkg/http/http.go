@@ -22,11 +22,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	"provisioner/pkg/cache"
-	"provisioner/pkg/development"
+	"provisioner/pkg/config"
 	"provisioner/pkg/httputil"
 )
 
 type HTTPServer struct {
+	config *config.Config
 	client client.Client
 	cache  *cache.Cache
 	ip     net.IP
@@ -34,8 +35,9 @@ type HTTPServer struct {
 	mux *http.ServeMux
 }
 
-func New(client client.Client, cache *cache.Cache, ip net.IP) *HTTPServer {
+func New(config *config.Config, client client.Client, cache *cache.Cache, ip net.IP) *HTTPServer {
 	hs := &HTTPServer{
+		config: config,
 		client: client,
 		cache:  cache,
 		ip:     ip,
@@ -86,13 +88,11 @@ func (hs *HTTPServer) userData(w http.ResponseWriter, r *http.Request) {
 		"prefer_fqdn_over_hostname": true,
 	}
 
-	if development.Config.SshAuthorizedKey != "" {
-		userData["ssh_authorized_keys"] = []any{
-			development.Config.SshAuthorizedKey,
-		}
+	if len(hs.config.AuthorizedKeys) > 0 {
+		userData["ssh_authorized_keys"] = hs.config.AuthorizedKeys
 	}
 
-	b, err := json.Marshal(userData)
+	b, err := json.MarshalIndent(userData, "", "  ")
 	if err != nil {
 		log.Print(err)
 		http.Error(w, http.StatusText(http.StatusInternalServerError), http.StatusInternalServerError)

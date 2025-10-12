@@ -4,15 +4,15 @@
   <vcpu>2</vcpu>
   <os>
     <type>hvm</type>
-    <kernel>$PWD/vmlinuz</kernel>
-    <initrd>$PWD/initrd.img</initrd>
-    <cmdline>root=/dev/vda1 ro console=tty1 console=ttyS0 ip=192.168.123.2::$DEVELOPMENT_DEFAULT_GATEWAY:255.255.255.0::::$DEVELOPMENT_NAMESERVER ds=nocloud;s=http://192.168.123.1:8000/</cmdline>
+    <kernel>{{ env "PWD" }}/vmlinuz</kernel>
+    <initrd>{{ env "PWD" }}/initrd.img</initrd>
+    <cmdline>root=/dev/vda1 ro console=tty1 console=ttyS0 ip={{ .Laptop.IP }}::{{ .Network.Gateway }}:{{ .Network.IPNet.MaskAsIP }}::::{{ .Network.Nameserver }} ds=nocloud;s=http://{{ .Host.IP }}:8000/</cmdline>
   </os>
   <cpu mode='host-passthrough'/>
   <devices>
     <disk type='file' device='disk'>
       <driver name='qemu' type='qcow2' discard='unmap'/>
-      <source file='$PWD/laptop.qcow2'/>
+      <source file='{{ env "PWD" }}/laptop.qcow2'/>
       <target dev='vda' bus='virtio'/>
     </disk>
     <interface type='network'>

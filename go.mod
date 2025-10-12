@@ -3,7 +3,9 @@ module provisioner
 go 1.24.5
 
 require (
+	github.com/goccy/go-yaml v1.18.0
 	github.com/insomniacslk/dhcp v0.0.0-20250919081422-f80a1952f48e
+	github.com/onsi/gomega v1.38.2
 	github.com/pin/tftp v2.1.0+incompatible
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
@@ -31,8 +33,6 @@ require (
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.3-0.20250322232337-35a7c28c31ee // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
-	github.com/onsi/ginkgo/v2 v2.25.1 // indirect
-	github.com/onsi/gomega v1.38.2 // indirect
 	github.com/pierrec/lz4/v4 v4.1.14 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/spf13/pflag v1.0.6 // indirect
