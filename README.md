@@ -48,10 +48,28 @@ Provisioner includes support to test the above using
    Also install:
 
    ```shell
-   sudo apt install ansible e2fsprogs virt-manager
+   sudo apt install ansible e2fsprogs virt-manager unzip
    ```
 
    You will also need a Docker registry you can push to and pull from.
+
+   **Azure Container Registry Setup**: If using Azure Container Registry (ACR), create one with anonymous pull enabled:
+
+   ```shell
+   # Create resource group (if needed)
+   az group create --name myResourceGroup --location eastus
+
+   # Create ACR with Standard SKU (required for anonymous pull)
+   az acr create --resource-group myResourceGroup --name myregistry --sku Standard
+
+   # Enable anonymous pull
+   az acr update --name myregistry --anonymous-pull-enabled true
+
+   # Login to ACR
+   az acr login --name myregistry
+   ```
+
+   **Note**: Anonymous pull requires Standard or Premium SKU. Basic SKU does not support this feature.
 
    Also, if you're running in WSL, switch on **nested virtualization** (needs
    WSL2 and Windows 11, apparently).  See [this

@@ -5,9 +5,9 @@ all: stage2 netboot hack/image-builder/images/capi/output bootstrap-imageserver
 stage2:
 	mkdir -p pkg/tftp/assets/amd64
 	docker build -t builder:latest hack/stage2
-	docker run --rm --mount type=bind,src=hack/stage2/initramfs-tools,dst=/etc/initramfs-tools --mount type=bind,src=pkg/tftp/assets/amd64,dst=/root/output builder:latest bash -c 'cp /boot/vmlinuz /root/output; mkinitramfs -o /root/output/initrd.img $$(basename /lib/modules/*)'
-
-# TODO: hard-coded container registry
+	docker run --rm --mount type=bind,src=$(PWD)/hack/stage2/initramfs-tools,dst=/etc/initramfs-tools --mount type=bind,src=$(PWD)/pkg/tftp/assets/amd64,dst=/root/output builder:latest bash -c 'cp /boot/vmlinuz /root/output; mkinitramfs -o /root/output/initrd.img $$(basename /lib/modules/*)' # TODO: hard-coded container registry
+	sudo chown $(USER):$(USER) pkg/tftp/assets/amd64/vmlinuz pkg/tftp/assets/amd64/initrd.img
+	sudo chmod 644 pkg/tftp/assets/amd64/vmlinuz pkg/tftp/assets/amd64/initrd.img
 netboot: stage2
 	go generate ./...
 	CGO_ENABLED=0 go build ./cmd/netboot
